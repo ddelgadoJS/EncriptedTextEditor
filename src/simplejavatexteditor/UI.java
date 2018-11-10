@@ -63,10 +63,10 @@ public class UI extends JFrame implements ActionListener {
     private final JMenuBar menuBar;
     private final JComboBox fontSize, fontType;
     private final JMenu menuFile, menuEdit, menuFind, menuAbout;
-    private final JMenuItem newFile, openFile, saveFile, close, cut, copy, paste, clearFile, selectAll, quickFind,
+    private final JMenuItem newFile, openFile, encryptText, decryptText, saveFile, close, cut, copy, paste, clearFile, selectAll, quickFind,
             aboutMe, aboutSoftware, wordWrap;
     private final JToolBar mainToolbar;
-    JButton newButton, openButton, saveButton, clearButton, quickButton, aboutMeButton, aboutButton, closeButton, boldButton, italicButton;
+    JButton newButton, openButton, encryptButton, decryptButton, saveButton, clearButton, quickButton, aboutMeButton, aboutButton, closeButton, boldButton, italicButton;
     private final Action selectAllAction;
 
     //setup icons - Bold and Italic
@@ -86,6 +86,8 @@ public class UI extends JFrame implements ActionListener {
     private final ImageIcon pasteIcon = new ImageIcon("icons/paste.png");
     private final ImageIcon selectAllIcon = new ImageIcon("icons/selectall.png");
     private final ImageIcon wordwrapIcon = new ImageIcon("icons/wordwrap.png");
+    private final ImageIcon encryptIcon = new ImageIcon("icons/encrypt.png");
+    private final ImageIcon decryptIcon = new ImageIcon("icons/decrypt.png");
 
     // setup icons - Search Menu
     private final ImageIcon searchIcon = new ImageIcon("icons/search.png");
@@ -99,9 +101,11 @@ public class UI extends JFrame implements ActionListener {
     AutoComplete autocomplete;
     private boolean hasListener = false;
     private boolean edit = false;
+    private static int lastEncryptedCharIndex = 0;
+    private static String key = "";
 
-    public UI() {
-         try {
+    public UI() {        
+        try {
             ImageIcon image = new ImageIcon("icons/ste.png");
             super.setIconImage(image.getImage());
         } 
@@ -141,7 +145,6 @@ public class UI extends JFrame implements ActionListener {
             }
         });
 
-
         JScrollPane scrollPane = new JScrollPane(textArea);
         textArea.setWrapStyleWord(true);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -160,6 +163,8 @@ public class UI extends JFrame implements ActionListener {
         // Set the Items Menu
         newFile = new JMenuItem("New", newIcon);
         openFile = new JMenuItem("Open", openIcon);
+        encryptText = new JMenuItem("Encrypt", encryptIcon);
+        decryptText = new JMenuItem("Decrypt", decryptIcon);
         saveFile = new JMenuItem("Save", saveIcon);
         close = new JMenuItem("Quit", closeIcon);
         clearFile = new JMenuItem("Clear", clearIcon);
@@ -191,6 +196,10 @@ public class UI extends JFrame implements ActionListener {
         openFile.addActionListener(this);
         openFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
         menuFile.add(openFile);
+        
+        // Encrypt
+        menuFile.add(encryptText);
+        menuFile.add(decryptText);
 
         // Save File
         saveFile.addActionListener(this);
@@ -308,6 +317,18 @@ public class UI extends JFrame implements ActionListener {
         saveButton.setToolTipText("Save");
         saveButton.addActionListener(this);
         mainToolbar.add(saveButton);
+        mainToolbar.addSeparator();
+        
+        encryptButton = new JButton(encryptIcon);
+        encryptButton.setToolTipText("Encrypt");
+        encryptButton.addActionListener(this);
+        mainToolbar.add(encryptButton);
+        mainToolbar.addSeparator();
+        
+        decryptButton = new JButton(decryptIcon);
+        decryptButton.setToolTipText("Decrypt");
+        decryptButton.addActionListener(this);
+        mainToolbar.add(decryptButton);
         mainToolbar.addSeparator();
 
         clearButton = new JButton(clearIcon);
@@ -519,9 +540,19 @@ public class UI extends JFrame implements ActionListener {
                     // ...write to the debug console
                     System.err.println(ex.getMessage());
                 }
+                
+                this.key = JOptionPane.showInputDialog("Ingrese la llave para la desencriptación");
+                this.lastEncryptedCharIndex = textArea.getText().length();
             }
         } // If the source of the event was the "save" option
         else if (e.getSource() == saveFile || e.getSource() == saveButton) {
+            while ((this.lastEncryptedCharIndex < textArea.getText().length()) || (this.key.isEmpty() && textArea.getText().length() > 0)){
+                System.out.println(this.lastEncryptedCharIndex);
+                if (this.key.isEmpty()) {
+                    this.key = JOptionPane.showInputDialog("Ingrese la llave para la encriptación");
+                }
+                textArea.setText(encryptText(textArea.getText(), this.key));
+            }
             saveFile();
         }// If the source of the event was the "Bold" button
         else if (e.getSource() == boldButton) {
@@ -537,6 +568,18 @@ public class UI extends JFrame implements ActionListener {
             } else {
                 textArea.setFont(textArea.getFont().deriveFont(Font.ITALIC));
             }
+        } // If the source of the event was the "encrypt" option
+        else if (e.getSource() == encryptText || e.getSource() == encryptButton) {
+            if(this.key.isEmpty()){
+                this.key = JOptionPane.showInputDialog("Ingrese la llave para la encriptación");
+            }
+            textArea.setText(encryptText(textArea.getText(), this.key));
+        } // If the source of the event was the "decrypt" option
+        else if (e.getSource() == decryptText || e.getSource() == decryptButton) {
+            if(this.key.isEmpty()){
+                this.key = JOptionPane.showInputDialog("Ingrese la llave para la desencriptación");
+            }
+            textArea.setText(decryptText(textArea.getText(), this.key));
         }
         // Clear File (Code)
         if (e.getSource() == clearFile || e.getSource() == clearButton) {
@@ -604,6 +647,74 @@ public class UI extends JFrame implements ActionListener {
                 System.err.println(ex.getMessage());
             }
         }
+    }
+     
+    private String encryptText(String text, String key) {
+        int textLength = text.length();
+        
+        if(this.lastEncryptedCharIndex < textLength){
+            if(this.lastEncryptedCharIndex + 3 <= textLength){
+                String textToEncrypt = text.substring(lastEncryptedCharIndex, lastEncryptedCharIndex + 3);
+                String encriptedText = AES.encrypt(textToEncrypt, key);
+                text = text.substring(0, lastEncryptedCharIndex) + encriptedText + text.substring(lastEncryptedCharIndex + 3, textLength);
+                System.out.println("text: " + text);
+                this.lastEncryptedCharIndex += encriptedText.length();
+            } 
+            else {
+                System.out.println("else: " + text);
+                int missingCharacters = this.lastEncryptedCharIndex + 3 - textLength;
+                while(missingCharacters > 0){
+                    text = text + " ";
+                    missingCharacters--;
+                }
+                
+                System.out.println("text: " + text);
+                textLength = text.length();
+                
+                String textToEncrypt = text.substring(lastEncryptedCharIndex, lastEncryptedCharIndex + 3);
+                String encriptedText = AES.encrypt(textToEncrypt, key);
+                text = text.substring(0, lastEncryptedCharIndex) + encriptedText + text.substring(lastEncryptedCharIndex + 3, textLength);
+                System.out.println("text: " + text);
+                this.lastEncryptedCharIndex += encriptedText.length();
+            }
+        }
+        return text;
+    }
+    private String decryptText(String text, String key) {
+        int textLength = text.length();
+        int decryptStartInd = -1;
+        int decryptFinalInd = -1;
+        if(this.lastEncryptedCharIndex > 0){
+            for (int i = textLength -1; i >= 0; i--){
+                if (text.charAt(i) == '=' && decryptFinalInd == -1) {
+                    decryptFinalInd = i+1;
+                    i--;
+                }
+                else if (text.charAt(i) == '=' && decryptFinalInd != -1 && decryptStartInd == -1) {
+                    decryptStartInd = i + 1;
+                    break;
+                }
+                else if (i == 0 && decryptFinalInd != -1) {
+                    decryptStartInd = i;
+                    break;
+                }
+            }
+            String textToDecrypt = text.substring(decryptStartInd, decryptFinalInd);
+            
+            System.out.println("textToDecrypt: " + textToDecrypt);
+            
+            this.lastEncryptedCharIndex = decryptStartInd;
+
+            String decriptedText = AES.decrypt(textToDecrypt, key);
+            
+            System.out.println("decriptedText: " + decriptedText);
+
+            text = text.substring(0, lastEncryptedCharIndex) + decriptedText + text.substring(decryptFinalInd, textLength);
+        }
+        
+        
+        
+        return text;
     }
      DropTargetListener dropTargetListener = new DropTargetListener() {
 
