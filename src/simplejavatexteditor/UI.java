@@ -546,13 +546,7 @@ public class UI extends JFrame implements ActionListener {
             }
         } // If the source of the event was the "save" option
         else if (e.getSource() == saveFile || e.getSource() == saveButton) {
-            while ((this.lastEncryptedCharIndex < textArea.getText().length()) || (this.key.isEmpty() && textArea.getText().length() > 0)){
-                System.out.println(this.lastEncryptedCharIndex);
-                if (this.key.isEmpty()) {
-                    this.key = JOptionPane.showInputDialog("Ingrese la llave para la encriptación");
-                }
-                textArea.setText(encryptText(textArea.getText(), this.key));
-            }
+            
             saveFile();
         }// If the source of the event was the "Bold" button
         else if (e.getSource() == boldButton) {
@@ -637,6 +631,15 @@ public class UI extends JFrame implements ActionListener {
                 setTitle(openFile.getName() + " | " + SimpleJavaTextEditor.NAME);
 
                 BufferedWriter out = new BufferedWriter(new FileWriter(openFile.getPath()));
+                
+                while ((this.lastEncryptedCharIndex < textArea.getText().length()) || (this.key.isEmpty() && textArea.getText().length() > 0)){
+                    System.out.println(this.lastEncryptedCharIndex);
+                    if (this.key.isEmpty()) {
+                        this.key = JOptionPane.showInputDialog("Ingrese la llave para la encriptación");
+                    }
+                    textArea.setText(encryptText(textArea.getText(), this.key));
+                }
+                
                 out.write(textArea.getText());
                 out.close();
 
