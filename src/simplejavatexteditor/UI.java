@@ -35,6 +35,22 @@
  * @Modifiedby Giorgos Pasentsis
  * @modemail gpasents@gmail.com
  */
+
+/**
+ * @name        Encripted Simple Java NotePad Modification
+ * @package ph.notepad
+ * @file UI.java
+ *
+ * @author Daniel Delgado
+ * @author Anthony Leandro
+ * @author Bryan Vargas
+ * @author Ignacio Cantillo
+ *
+ * Modification made taking as base the original Simple Java NotePad
+ * It incorporates encryption functionalities using AES algorithm
+ * It can encrypt partially, decrypt partially, save encrypted files,
+ * and decrypt encrypted files.
+ */
 package simplejavatexteditor;
 
 import javax.swing.*;

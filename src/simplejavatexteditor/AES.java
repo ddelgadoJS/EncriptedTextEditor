@@ -7,7 +7,8 @@ package simplejavatexteditor;
 
 /**
  *
- * @author Daniel
+ * @author Lokesh Gupta
+ * Taken from https://howtodoinjava.com/security/java-aes-encryption-example/
  */
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
