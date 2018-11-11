@@ -79,10 +79,10 @@ public class UI extends JFrame implements ActionListener {
     private final JMenuBar menuBar;
     private final JComboBox fontSize, fontType;
     private final JMenu menuFile, menuEdit, menuFind, menuAbout;
-    private final JMenuItem newFile, openFile, encryptText, decryptText, saveFile, close, cut, copy, paste, clearFile, selectAll, quickFind,
+    private final JMenuItem newFile, openFile, encryptText, encryptSliceText, decryptSliceText, decryptText, showKey, saveFile, close, cut, copy, paste, clearFile, selectAll, quickFind,
             aboutMe, aboutSoftware, wordWrap;
     private final JToolBar mainToolbar;
-    JButton newButton, openButton, encryptButton, decryptButton, saveButton, clearButton, quickButton, aboutMeButton, aboutButton, closeButton, boldButton, italicButton;
+    JButton newButton, openButton, encryptButton, encryptSliceButton , decryptSliceButton, decryptButton, showKeyButton, saveButton, clearButton, quickButton, aboutMeButton, aboutButton, closeButton, boldButton, italicButton;
     private final Action selectAllAction;
 
     //setup icons - Bold and Italic
@@ -103,7 +103,10 @@ public class UI extends JFrame implements ActionListener {
     private final ImageIcon selectAllIcon = new ImageIcon("icons/selectall.png");
     private final ImageIcon wordwrapIcon = new ImageIcon("icons/wordwrap.png");
     private final ImageIcon encryptIcon = new ImageIcon("icons/encrypt.png");
+    private final ImageIcon encryptSliceIcon = new ImageIcon("icons/encryptSlice.png");
     private final ImageIcon decryptIcon = new ImageIcon("icons/decrypt.png");
+    private final ImageIcon decryptSliceIcon = new ImageIcon("icons/decryptSlice.png");
+    private final ImageIcon showKeyIcon = new ImageIcon("icons/showKey.png");
 
     // setup icons - Search Menu
     private final ImageIcon searchIcon = new ImageIcon("icons/search.png");
@@ -130,7 +133,7 @@ public class UI extends JFrame implements ActionListener {
         }
         
         // Set the initial size of the window
-        setSize(800, 500);
+        setSize(1100, 650);
 
         // Set the title of the window
         setTitle("Untitled | " + SimpleJavaTextEditor.NAME);
@@ -180,7 +183,10 @@ public class UI extends JFrame implements ActionListener {
         newFile = new JMenuItem("New", newIcon);
         openFile = new JMenuItem("Open", openIcon);
         encryptText = new JMenuItem("Encrypt", encryptIcon);
+        encryptSliceText = new JMenuItem("Encrypt slice", encryptSliceIcon);
         decryptText = new JMenuItem("Decrypt", decryptIcon);
+        showKey = new JMenuItem("Show key", showKeyIcon);
+        decryptSliceText = new JMenuItem("Decrypt slice", decryptSliceIcon);
         saveFile = new JMenuItem("Save", saveIcon);
         close = new JMenuItem("Quit", closeIcon);
         clearFile = new JMenuItem("Clear", clearIcon);
@@ -213,10 +219,13 @@ public class UI extends JFrame implements ActionListener {
         openFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
         menuFile.add(openFile);
         
-        // Encrypt
+        // Encrypt, decrypt
         menuFile.add(encryptText);
+        menuFile.add(encryptSliceText);
         menuFile.add(decryptText);
-
+        menuFile.add(decryptSliceText);
+        menuFile.add(showKey);
+        
         // Save File
         saveFile.addActionListener(this);
         saveFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
@@ -341,10 +350,28 @@ public class UI extends JFrame implements ActionListener {
         mainToolbar.add(encryptButton);
         mainToolbar.addSeparator();
         
+        encryptSliceButton = new JButton(encryptSliceIcon);
+        encryptSliceButton.setToolTipText("Encrypt slice");
+        encryptSliceButton.addActionListener(this);
+        mainToolbar.add(encryptSliceButton);
+        mainToolbar.addSeparator();
+        
         decryptButton = new JButton(decryptIcon);
         decryptButton.setToolTipText("Decrypt");
         decryptButton.addActionListener(this);
         mainToolbar.add(decryptButton);
+        mainToolbar.addSeparator();
+        
+        decryptSliceButton = new JButton(decryptSliceIcon);
+        decryptSliceButton.setToolTipText("Decrypt slice");
+        decryptSliceButton.addActionListener(this);
+        mainToolbar.add(decryptSliceButton);
+        mainToolbar.addSeparator();
+        
+        showKeyButton = new JButton(showKeyIcon);
+        showKeyButton.setToolTipText("Show key");
+        showKeyButton.addActionListener(this);
+        //mainToolbar.add(showKeyButton);
         mainToolbar.addSeparator();
 
         clearButton = new JButton(clearIcon);
@@ -580,17 +607,72 @@ public class UI extends JFrame implements ActionListener {
             }
         } // If the source of the event was the "encrypt" option
         else if (e.getSource() == encryptText || e.getSource() == encryptButton) {
-            if(this.key.isEmpty()){
-                this.key = JOptionPane.showInputDialog("Ingrese la llave para la encriptación");
+            this.lastEncryptedCharIndex = getLastEncryptedCharIndex(textArea.getText());
+            
+            if (lastEncryptedCharIndex < textArea.getText().length() - 1) {
+                if ((textArea.getText().length() > 0)) {
+                    while ((this.lastEncryptedCharIndex < textArea.getText().length()) || ((this.key.isEmpty() || this.key == null) && textArea.getText().length() > 0)){
+                        System.out.println(this.lastEncryptedCharIndex);
+                        if (this.key == null || this.key.isEmpty()){
+                            this.key = JOptionPane.showInputDialog("Ingrese la llave para la encriptación");
+                            if(this.key != null){
+                                textArea.setText(encryptText(textArea.getText(), this.key));
+                            } else {
+                                break;
+                            }
+                        } else {
+                            textArea.setText(encryptText(textArea.getText(), this.key));
+                        }
+                    }
+                }
             }
-            textArea.setText(encryptText(textArea.getText(), this.key));
+        } // If the source of the event was the "encrypt slice" option
+        else if (e.getSource() == encryptSliceText || e.getSource() == encryptSliceButton) {
+            this.lastEncryptedCharIndex = getLastEncryptedCharIndex(textArea.getText());
+            
+            if (lastEncryptedCharIndex < textArea.getText().length() - 1) {
+                if ((textArea.getText().length() > 0)) {
+                    if (this.key == null || this.key.isEmpty()){
+                        this.key = JOptionPane.showInputDialog("Ingrese la llave para la encriptación");
+                        if(this.key != null){
+                            textArea.setText(encryptText(textArea.getText(), this.key));
+                        }
+                    } else {
+                        textArea.setText(encryptText(textArea.getText(), this.key));
+                    }
+                }
+            }
         } // If the source of the event was the "decrypt" option
         else if (e.getSource() == decryptText || e.getSource() == decryptButton) {
-            if(this.key.isEmpty()){
-                this.key = JOptionPane.showInputDialog("Ingrese la llave para la desencriptación");
+            if ((textArea.getText().length() > 0)) {
+                while (this.lastEncryptedCharIndex > 0){
+                    System.out.println(this.lastEncryptedCharIndex);
+                    if(this.key == null || this.key.isEmpty()){
+                        this.key = JOptionPane.showInputDialog("Ingrese la llave para la desencriptación");
+                        if(this.key != null){
+                            textArea.setText(decryptText(textArea.getText(), this.key));
+                        }
+                    } else {
+                        textArea.setText(decryptText(textArea.getText(), this.key));
+                    }
+                }
             }
-            textArea.setText(decryptText(textArea.getText(), this.key));
-        }
+        } // If the source of the event was the "decrypt slice" option
+        else if (e.getSource() == decryptSliceText || e.getSource() == decryptSliceButton) {
+            if ((textArea.getText().length() > 0)) {
+                if (this.lastEncryptedCharIndex > 0){
+                    System.out.println(this.lastEncryptedCharIndex);
+                    if(this.key == null || this.key.isEmpty()){
+                        this.key = JOptionPane.showInputDialog("Ingrese la llave para la desencriptación");
+                        if(this.key != null){
+                            textArea.setText(decryptText(textArea.getText(), this.key));
+                        }
+                    } else {
+                        textArea.setText(decryptText(textArea.getText(), this.key));
+                    }
+                }
+            }
+        } 
         // Clear File (Code)
         if (e.getSource() == clearFile || e.getSource() == clearButton) {
 
@@ -667,9 +749,20 @@ public class UI extends JFrame implements ActionListener {
             }
         }
     }
+    
+    private int getLastEncryptedCharIndex(String text) {
+        for (int i = text.length() -1; i >= 0; i--){
+            if (text.charAt(i) == '=') {
+                return i;
+            }
+        }
+        return 0;
+    }
      
     private String encryptText(String text, String key) {
         int textLength = text.length();
+        
+        
         
         if(this.lastEncryptedCharIndex < textLength){
             if(this.lastEncryptedCharIndex + 3 <= textLength){
